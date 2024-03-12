@@ -38,12 +38,6 @@ tab_width = 4
 wrap_comments = true
 
 [rpc_endpoints]
-<<<<<<< HEAD
-localhost = "http://localhost:8545"
-
-=======
-
->>>>>>> 0409a2cfd0f1d81fb3654930d4a4a597ff969aca
 goerli = "https://eth-goerli.nodereal.io/v1/9fb6310559cb49c28722f2ee74c405eb"
 mainnet = "https://eth-mainnet.nodereal.io/v1/9fb6310559cb49c28722f2ee74c405eb"
 localhost = "http://localhost:8545"
