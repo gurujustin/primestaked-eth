@@ -1,52 +1,49 @@
-const { logTxDetails } = require("../utils/txLogger");
-const { resolveAsset } = require("../utils/assets");
-const addresses = require("../utils/addresses");
 const { formatUnits, parseEther } = require("ethers").utils;
+
+const { logTxDetails } = require("../utils/txLogger");
+const { resolveAddress } = require("../utils/assets");
 
 const log = require("../utils/logger")("task:deposits");
 
-const depositAssetEL = async ({ signer, depositPool, nodeDelegator, symbol, minDeposit, index }) => {
-  const asset = await resolveAsset(symbol, signer);
+const depositPrime = async ({ signer, depositPool, amount, symbol }) => {
+  const assetAddress = await resolveAddress(symbol);
 
-  const balance = await asset.balanceOf(addresses.mainnet.LRT_DEPOSIT_POOL);
+  const assetUnits = parseEther(amount.toString());
+
+  log(`About to deposit ${symbol} to Prime Staked ETH`);
+  const tx = await depositPool.connect(signer).depositAsset(assetAddress, assetUnits, 0, "");
+  await logTxDetails(tx, "deposit");
+};
+
+const depositAssetEL = async ({ signer, asset, depositPool, nodeDelegator, symbol, minDeposit, index }) => {
+  const balance = await asset.balanceOf(depositPool.address);
   const minDepositBN = parseEther(minDeposit.toString());
 
   if (balance.gte(minDepositBN)) {
-    const assetAddress = await asset.address;
-
     log(`About to transfer ${formatUnits(balance)} ${symbol} to Node Delegator with index ${index}`);
-    const tx1 = await depositPool.connect(signer).transferAssetToNodeDelegator(0, assetAddress, balance);
+    const tx1 = await depositPool.connect(signer).transferAssetToNodeDelegator(index, asset.address, balance);
     await logTxDetails(tx1, "transferAssetToNodeDelegator");
 
-    log(`About to deposit ${symbol} to EigenLayer`);
-    const tx2 = await nodeDelegator.connect(signer).depositAssetIntoStrategy(assetAddress);
-    await logTxDetails(tx2, "depositAssetIntoStrategy");
+    if (symbol != "WETH") {
+      log(`About to deposit ${symbol} to EigenLayer`);
+      const tx2 = await nodeDelegator.connect(signer).depositAssetIntoStrategy(asset.address);
+      await logTxDetails(tx2, "depositAssetIntoStrategy");
+    }
   } else {
     log(`Skipping deposit of ${await asset.symbol()} as the balance is ${formatUnits(balance)}`);
   }
 };
 
-const depositAllEL = async ({ signer, depositPool, nodeDelegator, minDeposit, index }) => {
-  const assetAddresses = [
-    addresses.mainnet.OETH,
-    addresses.mainnet.sfrxETH,
-    addresses.mainnet.mETH,
-    addresses.mainnet.stETH,
-    addresses.mainnet.rETH,
-    addresses.mainnet.swETH,
-    addresses.mainnet.ETHx,
-  ];
-
+const depositAllEL = async ({ signer, depositPool, nodeDelegator, assets, minDeposit, index }) => {
   const minDepositBN = parseEther(minDeposit.toString());
 
   const depositAssets = [];
   const symbols = [];
 
-  for (const assetAddress of assetAddresses) {
-    const asset = await resolveAsset(assetAddress, signer);
+  for (const asset of assets) {
     const symbol = await asset.symbol();
 
-    const balance = await asset.balanceOf(addresses.mainnet.LRT_DEPOSIT_POOL);
+    const balance = await asset.balanceOf(depositPool.address);
     if (balance.gte(minDepositBN)) {
       log(`Will deposit ${formatUnits(balance)} ${symbol}`);
       depositAssets.push(assetAddress);
@@ -58,7 +55,7 @@ const depositAllEL = async ({ signer, depositPool, nodeDelegator, minDeposit, in
 
   if (depositAssets.length > 0) {
     console.log(`About to transfer assets ${symbols} to Node Delegator with index ${index}`);
-    const tx1 = await depositPool.connect(signer).transferAssetsToNodeDelegator(0, depositAssets);
+    const tx1 = await depositPool.connect(signer).transferAssetsToNodeDelegator(index, depositAssets);
     await logTxDetails(tx1, "transferAssetToNodeDelegator");
 
     log(`About to deposit assets to EigenLayer`);
@@ -69,4 +66,4 @@ const depositAllEL = async ({ signer, depositPool, nodeDelegator, minDeposit, in
   }
 };
 
-module.exports = { depositAssetEL, depositAllEL };
+module.exports = { depositPrime, depositAssetEL, depositAllEL };
