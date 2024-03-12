@@ -1,5 +1,5 @@
 [profile.default]
-evm_version = "shanghai"       # See https://www.evmdiff.com/features?name=PUSH0&kind=opcode
+evm_version = "shanghai"                                       # See https://www.evmdiff.com/features?name=PUSH0&kind=opcode
 src = "contracts"
 out = "out"
 libs = ["node_modules", "lib"]
@@ -10,7 +10,7 @@ optimizer_runs = 10_000
 solc_version = "0.8.21"
 build_info = true
 extra_output = ["storageLayout"]
-fs_permissions = [{ access = "read-write", path = "./data/"}]
+fs_permissions = [{ access = "read-write", path = "./data/" }]
 
 [profile.ci]
 fuzz = { runs = 10_000 }
@@ -28,5 +28,5 @@ wrap_comments = true
 
 [rpc_endpoints]
 localhost = "http://localhost:8545"
-goerli = "https://eth-goerli.nodereal.io/v1/${API_KEY_NODE_REAL}"
-mainnet = "https://eth-mainnet.nodereal.io/v1/${API_KEY_NODE_REAL}"
+goerli = "https://eth-goerli.nodereal.io/v1/9fb6310559cb49c28722f2ee74c405eb"
+mainnet = "https://eth-mainnet.nodereal.io/v1/9fb6310559cb49c28722f2ee74c405eb"
